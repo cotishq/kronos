@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cotishq/kronos/internal/event"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -32,6 +34,7 @@ func main() {
 
 	for {
 		m, err := r.ReadMessage(ctx)
+		var e event.Event
 		if err != nil {
 			if ctx.Err() != nil {
 				fmt.Println("\nshutting down audit consumer")
@@ -40,8 +43,14 @@ func main() {
 			fmt.Println("failed to read message", err)
 			continue
 		}
+
+		err = json.Unmarshal(m.Value, &e)
+		if err != nil {
+			fmt.Println("failed to unmarshal:", err)
+			continue
+		}
 		
-		fmt.Fprintf(f, "[audit] %s: %s\n", time.Now().Format(time.RFC3339), string(m.Key))
+		fmt.Fprintf(f, "[audit] %s: %s\n", time.Now().Format(time.RFC3339), e.Type)
 
 	}
 	fmt.Println("audit-consumer stopped")

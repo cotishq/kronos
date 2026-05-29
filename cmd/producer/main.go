@@ -16,34 +16,50 @@ func main() {
 		Topic: "user-events",
 		Balancer: &kafka.LeastBytes{},
 	}
+	defer w.Close()
 
-	e := event.Event{
-		ID: "evt-001",
-		Type: "user_signup",
-		Payload: "user123",
-		Timestamp: time.Now(),
-	}
-
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		log.Fatal("failed to marshal event:", err)
-	}
-
-	err = w.WriteMessages(context.Background(),
-		kafka.Message{
-			Key: []byte(e.Type),
-			Value: bytes,
+	e := []event.Event{
+		{
+			ID: "evt-001",
+			Type: "user_signup",
+			Payload: "user123",
+			Timestamp: time.Now(),
 		},
-)
+		{
+			ID: "evt-002",
+			Type: "payment_success",
+			Payload: "payment123",
+			Timestamp: time.Now(),
+		},
+		{
+			ID: "evt-003",
+			Type: "file_uploaded",
+			Payload: "file123",
+			Timestamp: time.Now(),
+		},
+		
+	}
 
-if err != nil {
-	log.Fatal("failed to write message:", err)
-}
-if err := w.Close(); err != nil {
-	log.Fatal("failed to close writer:", err)
-}
+	for _, evt := range e {
 
-log.Println("event published successfully:", e.Type)
+		bytes, err := json.Marshal(evt)
+		if err != nil {
+			log.Fatal("failed to marshal event:", err)
+		}
 
-	
+		err = w.WriteMessages(context.Background(),
+			kafka.Message{
+				Key: []byte(evt.Type),
+				Value: bytes,
+			},
+		)
+
+		if err != nil {
+			log.Fatal("failed to write message:", err)
+			}
+		
+			log.Println("event published successfully:", evt.Type)
+		
+
+	}	
 }

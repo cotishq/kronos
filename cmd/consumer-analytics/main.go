@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os/signal"
 	"syscall"
 
+	"github.com/cotishq/kronos/internal/event"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -18,13 +20,13 @@ func main() {
 	})
 	defer r.Close()
 
-
-	count := 0
+    eventCounts := make(map[string]int)
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	for {
 		m, err := r.ReadMessage(ctx)
+		var e event.Event
 
 		if err != nil {
 			if ctx.Err() != nil {
@@ -35,14 +37,23 @@ func main() {
 			fmt.Println("failed to read message", err)
 			continue
 		}
-		
-		count++
-		fmt.Printf("[analytics] event #%d: %s\n", count, string(m.Key))
+
+
+		err = json.Unmarshal(m.Value, &e)
+		if err != nil {
+			fmt.Println("failed to unmarshal event:", err)
+			continue
+		}
+		eventCounts[e.Type]++
+		fmt.Printf(
+			"[analytics] %s count=%d\n",
+			e.Type,
+			eventCounts[e.Type],
+			)
 		
 
 	}
 
 	fmt.Println("analytics consumer stopped")
-	
 	
 }
