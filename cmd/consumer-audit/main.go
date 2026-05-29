@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -17,6 +19,7 @@ func main() {
 		Topic: "user-events",
 		GroupID: "audit-group",
 	})
+	defer r.Close()
 
 	f, err := os.OpenFile("audit.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -24,14 +27,22 @@ func main() {
 	}
 	defer f.Close()
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	for {
-		m, err := r.ReadMessage(context.Background())
+		m, err := r.ReadMessage(ctx)
 		if err != nil {
+			if ctx.Err() != nil {
+				fmt.Println("\nshutting down audit consumer")
+				break
+			}
 			fmt.Println("failed to read message", err)
 			continue
 		}
 		
-		f.WriteString(fmt.Sprintf("[audit] %s: %s\n", time.Now().Format(time.RFC3339), string(m.Key)))
+		fmt.Fprintf(f, "[audit] %s: %s\n", time.Now().Format(time.RFC3339), string(m.Key))
 
 	}
+	fmt.Println("audit-consumer stopped")
 }
