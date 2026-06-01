@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/cotishq/kronos/proto";
+
+service EventService {
+    rpc SendEvent(SendEventRequest) returns (SendEventResponse); 
+}
+
+message SendEventRequest {
+    string id = 1;
+    string payload = 2;
+    string type = 3;
+}
+
+message SendEventResponse {
+    string message = 1;
+    string status = 2;
+}
