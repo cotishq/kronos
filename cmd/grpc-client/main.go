@@ -25,7 +25,7 @@ func main() {
 	defer conn.Close()
 	c := proto.NewEventServiceClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	r, err := c.SendEvent(ctx, &proto.SendEventRequest{
 		Id: "evt-001",
