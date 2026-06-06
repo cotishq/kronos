@@ -6,13 +6,26 @@ import (
 	"fmt"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/cotishq/kronos/internal/event"
 	"github.com/segmentio/kafka-go"
 )
 
+func processEvent(e event.Event, eventCounts map[string]int) error {
+	eventCounts[e.Type]++
+	fmt.Printf("[analytics] %s count=%d\n", e.Type, eventCounts[e.Type])
+	return nil
+}
 
 func main() {
+	dlq := &kafka.Writer{
+		Addr: kafka.TCP("localhost:9092"),
+		Topic: "dead-letter",
+		Balancer: &kafka.LeastBytes{},
+	}
+	defer dlq.Close()
+
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{"localhost:9092"},
 		Topic: "user-events",
@@ -44,14 +57,27 @@ func main() {
 			fmt.Println("failed to unmarshal event:", err)
 			continue
 		}
-		eventCounts[e.Type]++
-		fmt.Printf(
-			"[analytics] %s count=%d\n",
-			e.Type,
-			eventCounts[e.Type],
-			)
-		
 
+		maxRetries := 3
+		var processErr error
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			processErr = processEvent(e, eventCounts)
+			if processErr == nil {
+				break
+			}
+			fmt.Printf("[analytics] attempt %d failed: %v, retrying...\n", attempt+1, processErr)
+			time.Sleep(time.Duration(attempt+1) * time.Second)
+		}
+		if processErr != nil {
+			fmt.Printf("[analytics] all retries exhausted for event: %s, sending to DLQ\n", e.ID)
+
+			bytes, _ := json.Marshal(e)
+			dlq.WriteMessages(context.Background(), kafka.Message{
+				Key: []byte(e.ID),
+				Value: bytes,
+			})
+
+		}
 	}
 
 	fmt.Println("analytics consumer stopped")

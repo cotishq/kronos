@@ -28,9 +28,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	r, err := c.SendEvent(ctx, &proto.SendEventRequest{
-		Id: "evt-001",
-		Type: "user_signup",
-		Payload: "user123",
+		Id: "evt-002",
+		Type: "payment_success",
+		Payload: "payment123",
 	})
 	if err != nil {
 		log.Fatalf("could not send event: %v",err)
