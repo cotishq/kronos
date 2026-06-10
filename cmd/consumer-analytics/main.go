@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/cotishq/kronos/internal/event"
 	"github.com/segmentio/kafka-go"
 )
+
+var seenEvents sync.Map
 
 func processEvent(e event.Event, eventCounts map[string]int) error {
 	eventCounts[e.Type]++
@@ -57,6 +60,13 @@ func main() {
 			fmt.Println("failed to unmarshal event:", err)
 			continue
 		}
+
+		if _, seen := seenEvents.Load(e.ID); seen {
+			fmt.Printf("[analytics] duplicate event skipped: %s\n", e.ID)
+			continue
+		}
+
+		seenEvents.Store(e.ID, true)
 
 		maxRetries := 3
 		var processErr error
