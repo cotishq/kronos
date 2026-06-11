@@ -4,16 +4,40 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/cotishq/kronos/internal/event"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/segmentio/kafka-go"
 )
 
 var seenEvents sync.Map
+
+type metrics struct {
+	eventsProcessed prometheus.Counter
+	eventsDlq 		prometheus.Counter
+}
+
+func newMetrics(reg prometheus.Registerer) *metrics {
+	m := &metrics{
+		eventsProcessed: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "kronos_events_processed_total",
+			Help: "Total number of events processed",
+		}),
+		eventsDlq: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "kronos_events_dlq_total",
+			Help: "Total number of dlq events",
+		}),
+	}
+	return m
+}
 
 func processEvent(e event.Event, eventCounts map[string]int) error {
 	eventCounts[e.Type]++
@@ -35,6 +59,15 @@ func main() {
 		GroupID: "analytics-group",
 	})
 	defer r.Close()
+
+	reg := prometheus.NewRegistry()
+	metrics := newMetrics(reg)
+
+	go func ()  {
+		http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+		log.Println("metrics server listening at :2113")
+		http.ListenAndServe(":2113", nil)
+	}()
 
     eventCounts := make(map[string]int)
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -73,6 +106,7 @@ func main() {
 		for attempt := 0; attempt < maxRetries; attempt++ {
 			processErr = processEvent(e, eventCounts)
 			if processErr == nil {
+				metrics.eventsProcessed.Inc()
 				break
 			}
 			fmt.Printf("[analytics] attempt %d failed: %v, retrying...\n", attempt+1, processErr)
@@ -86,6 +120,7 @@ func main() {
 				Key: []byte(e.ID),
 				Value: bytes,
 			})
+			metrics.eventsDlq.Inc()
 
 		}
 	}
