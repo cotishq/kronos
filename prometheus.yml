@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "grpc-server"
+    static_configs:
+      - targets: 
+        - host.docker.internal:2112
+
+  - job_name: "analytics-consumer"
+    static_configs:
+      - targets: 
+        - host.docker.internal:2113
