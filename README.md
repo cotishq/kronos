@@ -8,7 +8,8 @@ I built this in roughly two weeks, mostly as a hands-on learning project, with a
 
 ## Architecture
 
-<!-- Architecture diagram goes here -->
+<img width="1238" height="714" alt="Screenshot From 2026-06-12 21-23-11" src="https://github.com/user-attachments/assets/26e01de5-bf89-4821-a9c2-b69f21beaefa" />
+
 
 ```text
 grpc-client -> grpc-server -> Kafka topic: user-events
