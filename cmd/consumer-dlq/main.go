@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os/signal"
 	"syscall"
@@ -11,9 +12,14 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+var (
+	kafkaBroker = flag.String("kafka-broker", "localhost:9092", "Kafka broker address")
+)
+
 func main()  {
+	flag.Parse()
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"localhost:9092"},
+		Brokers: []string{*kafkaBroker},
 		Topic: "dead-letter",
 		GroupID: "dlq-group",
 	})

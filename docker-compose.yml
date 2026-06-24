@@ -7,27 +7,109 @@ services:
       - "9091:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - kronos-net
 
   grafana: 
     image: grafana/grafana
     ports:
       - "3001:3000"
+    networks:
+      - kronos-net
   kafka:
     image: apache/kafka:4.3.0
     container_name: kafka
     ports:
       - "9092:9092"
+      - "29092:29092"
 
     environment:
        KAFKA_NODE_ID: 1
        KAFKA_PROCESS_ROLES: broker, controller
-       KAFKA_LISTENERS: PLAINTEXT://:9092, CONTROLLER://:9093
-       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+       KAFKA_LISTENERS: PLAINTEXT://:9092, PLAINTEXT_HOST://:29092, CONTROLLER://:9093
+       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092, PLAINTEXT_HOST://localhost:29092
        KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT, CONTROLLER:PLAINTEXT
+       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT, PLAINTEXT_HOST:PLAINTEXT, CONTROLLER:PLAINTEXT
+       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
        KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
        KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
        KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - kronos-net
+
+  grpc-server:
+    build:
+      context: .
+      dockerfile: Dockerfiles/grpc-server.Dockerfile
+    ports:
+      - "50051:50051"
+      - "2112:2112"
+    command: ["-kafka-broker=kafka:9092"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - kronos-net
+
+  consumer-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfiles/consumer-analytics.Dockerfile
+    ports:
+      - "2113:2113"
+    command: ["-kafka-broker=kafka:9092"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - kronos-net
+
+  consumer-dlq:
+    build:
+      context: .
+      dockerfile: Dockerfiles/consumer-dlq.Dockerfile
+    command: ["-kafka-broker=kafka:9092"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - kronos-net
+
+  consumer-audit:
+    build:
+      context: .
+      dockerfile: Dockerfiles/consumer-audit.Dockerfile
+    command: ["-kafka-broker=kafka:9092"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - kronos-net
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfiles/producer.Dockerfile
+    command: ["-kafka-broker=kafka:9092"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - kronos-net
+    profiles:
+      - tools
+
+  
+networks:
+  kronos-net:
+    driver: bridge

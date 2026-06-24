@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"log"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -14,20 +13,18 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+var (
+	kafkaBroker = flag.String("kafka-broker", "localhost:9092", "Kafka broker address")
+)
 
 func main() {
+	flag.Parse()
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"localhost:9092"},
+		Brokers: []string{*kafkaBroker},
 		Topic: "user-events",
 		GroupID: "audit-group",
 	})
 	defer r.Close()
-
-	f, err := os.OpenFile("audit.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatal("failed to open audit.log:", err)
-	}
-	defer f.Close()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -50,7 +47,7 @@ func main() {
 			continue
 		}
 		
-		fmt.Fprintf(f, "[audit] %s: %s\n", time.Now().Format(time.RFC3339), e.Type)
+		fmt.Printf("[audit] %s: %s\n", time.Now().Format(time.RFC3339), e.Type)
 
 	}
 	fmt.Println("audit-consumer stopped")

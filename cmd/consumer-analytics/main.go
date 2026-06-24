@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,6 +20,10 @@ import (
 )
 
 var seenEvents sync.Map
+
+var (
+	kafkaBroker = flag.String("kafka-broker", "localhost:9092", "Kafka broker address")
+)
 
 type metrics struct {
 	eventsProcessed prometheus.Counter
@@ -46,15 +51,16 @@ func processEvent(e event.Event, eventCounts map[string]int) error {
 }
 
 func main() {
+	flag.Parse()
 	dlq := &kafka.Writer{
-		Addr: kafka.TCP("localhost:9092"),
+		Addr: kafka.TCP(*kafkaBroker),
 		Topic: "dead-letter",
 		Balancer: &kafka.LeastBytes{},
 	}
 	defer dlq.Close()
 
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"localhost:9092"},
+		Brokers: []string{*kafkaBroker},
 		Topic: "user-events",
 		GroupID: "analytics-group",
 	})

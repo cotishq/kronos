@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"log"
 	"time"
 
@@ -10,9 +11,14 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+var (
+	kafkaBroker = flag.String("kafka-broker", "localhost:9092", "Kafka broker address")
+)
+
 func main() {
+	flag.Parse()
 	w := &kafka.Writer{
-		Addr: kafka.TCP("localhost:9092"),
+		Addr: kafka.TCP(*kafkaBroker),
 		Topic: "user-events",
 		Balancer: &kafka.LeastBytes{},
 	}

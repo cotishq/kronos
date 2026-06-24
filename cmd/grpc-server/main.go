@@ -21,6 +21,7 @@ import (
 
 var (
 	port = flag.Int("port", 50051, "The server Port")
+	kafkaBroker = flag.String("kafka-broker", "localhost:9092", "Kafka broker address")
 )
 
 type server struct {
@@ -90,7 +91,7 @@ func main() {
 	}
 
 	w := &kafka.Writer{
-		Addr: kafka.TCP("localhost:9092"),
+		Addr: kafka.TCP(*kafkaBroker),
 		Topic: "user-events",
 		Balancer: &kafka.LeastBytes{},
 	}
