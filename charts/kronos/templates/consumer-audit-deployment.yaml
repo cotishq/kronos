@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kronos-consumer-audit
+  labels:
+    {{- include "kronos.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.consumerAudit.replicas }}
+  selector:
+    matchLabels:
+      app: kronos-consumer-audit
+  template:
+    metadata:
+      labels:
+        app: kronos-consumer-audit
+    spec:
+      containers:
+        - name: consumer-audit
+          image: "{{ .Values.consumerAudit.image }}:{{ .Values.consumerAudit.tag }}"
+          imagePullPolicy: Never
+          args: ["-kafka-broker={{ .Values.kafka.broker }}"]

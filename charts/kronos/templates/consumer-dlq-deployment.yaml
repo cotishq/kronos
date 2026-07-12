@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kronos-consumer-dlq
+  labels:
+    {{- include "kronos.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.consumerDlq.replicas }}
+  selector:
+    matchLabels:
+      app: kronos-consumer-dlq
+  template:
+    metadata:
+      labels:
+        app: kronos-consumer-dlq
+    spec:
+      containers:
+        - name: consumer-dlq
+          image: "{{ .Values.consumerDlq.image }}:{{ .Values.consumerDlq.tag }}"
+          imagePullPolicy: Never
+          args: ["-kafka-broker={{ .Values.kafka.broker }}"]

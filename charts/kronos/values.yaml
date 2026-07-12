@@ -1,0 +1,27 @@
+kafka:
+  image: apache/kafka
+  tag: "4.3.0"
+  broker: "kronos-kafka:9092"
+
+grpcServer:
+  image: kronos-grpc-server
+  tag: latest
+  replicas: 1
+  port: 50051
+  metricsPort: 2112
+
+consumerAnalytics:
+  image: kronos-consumer-analytics
+  tag: latest
+  replicas: 1
+  metricsPort: 2113
+
+consumerAudit:
+  image: kronos-consumer-audit
+  tag: latest
+  replicas: 1
+
+consumerDlq:
+  image: kronos-consumer-dlq
+  tag: latest
+  replicas: 1

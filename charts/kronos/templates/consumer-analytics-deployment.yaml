@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kronos-consumer-analytics
+  labels:
+    {{- include "kronos.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.consumerAnalytics.replicas }}
+  selector:
+    matchLabels:
+      app: kronos-consumer-analytics
+  template:
+    metadata:
+      labels:
+        app: kronos-consumer-analytics
+    spec:
+      containers:
+        - name: consumer-analytics
+          image: "{{ .Values.consumerAnalytics.image }}:{{ .Values.consumerAnalytics.tag }}"
+          imagePullPolicy: Never
+          args: ["-kafka-broker={{ .Values.kafka.broker }}"]
+          ports:
+            - containerPort: {{ .Values.consumerAnalytics.metricsPort }}

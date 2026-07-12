@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kronos-grpc-server
+  labels:
+    {{- include "kronos.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: kronos-grpc-server
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+    - name: metrics
+      port: 2112
+      targetPort: 2112

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kronos-grpc-server
+  labels:
+    {{- include "kronos.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.grpcServer.replicas }}
+  selector:
+    matchLabels:
+      app: kronos-grpc-server
+  template:
+    metadata:
+      labels:
+        app: kronos-grpc-server
+    spec:
+      containers:
+        - name: grpc-server
+          image: "{{ .Values.grpcServer.image }}:{{ .Values.grpcServer.tag }}"
+          imagePullPolicy: Never
+          args: ["-kafka-broker={{ .Values.kafka.broker }}"]
+          ports:
+            - containerPort: {{ .Values.grpcServer.port }}
+            - containerPort: {{ .Values.grpcServer.metricsPort }}
