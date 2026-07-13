@@ -14,6 +14,10 @@ spec:
       labels:
         app: kronos-consumer-dlq
     spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.28
+          command: ['sh', '-c', 'until nslookup kronos-kafka.default.svc.cluster.local; do echo waiting for kafka; sleep 2; done']
       containers:
         - name: consumer-dlq
           image: "{{ .Values.consumerDlq.image }}:{{ .Values.consumerDlq.tag }}"
