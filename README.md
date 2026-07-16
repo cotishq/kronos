@@ -46,7 +46,10 @@ cmd/
 
 internal/event/         shared Event model
 proto/                  protobuf definition and generated Go code
-docker-compose.yml      Kafka, Prometheus, and Grafana
+charts/                 Helm charts for Kubernetes deployment
+  kronos/               main Helm chart for deployment
+argocd/                 ArgoCD Application configuration
+docker-compose.yml      Kafka, Prometheus, and Grafana for local Docker setup
 prometheus.yml          Prometheus scrape config
 ```
 
@@ -59,6 +62,9 @@ prometheus.yml          Prometheus scrape config
 - Prometheus
 - Grafana
 - Docker Compose
+- Kubernetes
+- Helm
+- ArgoCD
 
 ## Running Locally
 
@@ -103,6 +109,40 @@ You can also publish the sample events directly to Kafka:
 ```bash
 go run ./cmd/producer
 ```
+
+## Kubernetes & ArgoCD Deployment
+
+The project can be deployed to a Kubernetes cluster using the provided Helm chart or via ArgoCD for a GitOps workflow.
+
+### 1. Deployment via Helm
+
+To deploy the Kronos components using Helm:
+
+```bash
+# Deploy/Upgrade the Helm release
+helm upgrade --install kronos ./charts/kronos
+```
+
+This will spin up:
+- `grpc-server`
+- `consumer-analytics`
+- `consumer-audit`
+- `consumer-dlq`
+- `kafka` (local development cluster)
+
+Deployment options (e.g. replicas, image tags, etc.) can be configured in [charts/kronos/values.yaml](charts/kronos/values.yaml).
+
+### 2. GitOps Deployment via ArgoCD
+
+An ArgoCD Application manifest is provided in [argocd/kronos-app.yml](argocd/kronos-app.yml).
+
+To register the application in ArgoCD:
+
+```bash
+kubectl apply -f argocd/kronos-app.yml
+```
+
+This creates a `kronos` application tracking the `charts/kronos` path in this repository, with automated prune and self-healing enabled.
 
 ## Observability
 
