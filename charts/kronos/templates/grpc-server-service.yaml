@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: kronos-grpc-server
   labels:
+    app: kronos-grpc-server
     {{- include "kronos.labels" . | nindent 4 }}
 spec:
   selector:

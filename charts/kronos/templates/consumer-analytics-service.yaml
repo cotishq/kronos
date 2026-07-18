@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kronos-consumer-analytics
+  labels:
+    app: kronos-consumer-analytics
+    {{- include "kronos.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: kronos-consumer-analytics
+  ports:
+    - name: metrics
+      port: 2113
+      targetPort: 2113
