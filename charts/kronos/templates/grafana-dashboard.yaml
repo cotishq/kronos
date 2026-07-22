@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kronos-grafana-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  kronos.json: |
+    {
+      "title": "Kronos Event Pipeline",
+      "uid": "kronos-pipeline",
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "title": "Event Publish Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "rate(kronos_events_published_total[1m])",
+            "legendFormat": "published/sec"
+          }]
+        },
+        {
+          "id": 2,
+          "title": "Events Processed Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [{
+            "expr": "rate(kronos_events_processed_total[1m])",
+            "legendFormat": "processed/sec"
+          }]
+        },
+        {
+          "id": 3,
+          "title": "DLQ Rate",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [{
+            "expr": "rate(kronos_events_dlq_total[1m])",
+            "legendFormat": "dlq/sec"
+          }]
+        },
+        {
+          "id": 4,
+          "title": "Pod Restarts",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [{
+            "expr": "increase(kube_pod_container_status_restarts_total{namespace=\"default\"}[1h])",
+            "legendFormat": "{{`{{pod}}`}}"
+          }]
+        },
+        {
+          "id": 5,
+          "title": "Total Events Published",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16},
+          "targets": [{
+            "expr": "sum(kronos_events_published_total)",
+            "legendFormat": "total"
+          }]
+        },
+        {
+          "id": 6,
+          "title": "Total Events Processed",
+          "type": "stat",
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16},
+          "targets": [{
+            "expr": "sum(kronos_events_processed_total)",
+            "legendFormat": "total"
+          }]
+        }
+      ],
+      "schemaVersion": 38,
+      "version": 1
+    }
