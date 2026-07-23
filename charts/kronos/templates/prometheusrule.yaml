@@ -1,0 +1,43 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kronos-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: kronos.rules
+      rules:
+        - alert: KronosDLQSpike
+          expr: rate(kronos_events_dlq_total[5m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Kronos events are landing in DLQ"
+            description: "DLQ rate is {{`{{ $value | humanize }}`}} events/sec."
+
+        - alert: KronosProcessingLag
+          expr: |
+            rate(kronos_events_published_total[5m])
+              - rate(kronos_events_processed_total[5m]) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Kronos publish rate exceeds process rate"
+            description: "Lag of {{`{{ $value | humanize }}`}} events/sec for 5m."
+
+        - alert: KronosPodRestarts
+          expr: |
+            increase(kube_pod_container_status_restarts_total{
+              namespace="default",
+              pod=~"kronos-.*"
+            }[15m]) > 2
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Kronos pod {{`{{ $labels.pod }}`}} restarting"
+            description: "{{`{{ $value }}`}} restarts in 15m."
