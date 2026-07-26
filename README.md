@@ -7,7 +7,10 @@ Built without AI assistance to develop genuine systems intuition.
 
 ## Architecture
 
-<img width="1238" height="714" alt="Screenshot From 2026-06-12 21-23-11" src="https://github.com/user-attachments/assets/26e01de5-bf89-4821-a9c2-b69f21beaefa" />
+
+<img width="1103" height="714" alt="image" src="https://github.com/user-attachments/assets/db6ba787-7bf3-4774-beaa-215f7d732c1d" />
+
+
 
 ```text
 grpc-client → grpc-server → Kafka topic: user-events
