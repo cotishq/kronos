@@ -79,7 +79,7 @@ Dashboards and alerting rules are committed as code — no manual Grafana clicki
 ```bash
 # access Grafana
 kubectl port-forward -n monitoring svc/monitoring-grafana 3001:80
-# http://localhost:3001 → admin / kronos123
+# http://localhost:3001 → admin / <grafana.adminPassword from values.yaml>
 ```
 
 ## Infrastructure (Terraform)
