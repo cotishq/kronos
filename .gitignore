@@ -1,2 +1,6 @@
 infra/.terraform/
 infra/kronos.tfplan
+audit.log
+*.log
+.env
+.env.*
