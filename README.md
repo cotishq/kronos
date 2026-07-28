@@ -1,9 +1,7 @@
 # Kronos
 
-A distributed event processing pipeline built in Go — gRPC ingestion, Kafka fan-out,
+A distributed event processing pipeline built in Go - gRPC ingestion, Kafka fan-out,
 multiple consumers, deployed on Kubernetes with full observability as code.
-
-Built without AI assistance to develop genuine systems intuition.
 
 ## Architecture
 
